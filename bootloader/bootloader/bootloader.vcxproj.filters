@@ -18,5 +18,8 @@
     <ClCompile Include="src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\HorseEFI\HorseEFI\src\efi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
