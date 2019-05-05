@@ -53,9 +53,9 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 	println(L"Booting....");
 
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = 0;
-	EFI_GUID guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+	EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 
-	systble->BootServices->LocateProtocol(&guid, 0, &gop);
+	systble->BootServices->LocateProtocol(&gopGuid, 0, &gop);
 
 	if (gop == 0) {
 		println(L"Failed to locate EFI_GRAPHICS_OUTPUT_PROTOCOL!");
@@ -90,7 +90,22 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 
 	printf(L"Setting text mode to %U:\n    Columns x Rows: %Ux%U\n", topModeIndex, col, row);
 
-	println(L"Loading memory map...");
+	EFI_GUID sfpGuid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* sfp = 0;
+
+	println(L"Loading kernel");
+
+	systble->BootServices->LocateProtocol(&sfpGuid, 0, &sfp);
+
+	if (sfp == 0) {
+		printf(L"Failed to locate EFI_SIMPLE_FILE_SYSTEM_PROTOCOL!");
+		WaitEscapeAndExit();
+	}
+
+	EFI_FILE_PROTOCOL* rootDir = 0;
+	sfp->OpenVolume(sfp, &rootDir);
+
+	EFI_FILE_PROTOCOL* file = OpenFile(rootDir, L"memmap.txt", EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
 
 	UINTN mapSize = 0;
 	UINTN mapKey = 0;
@@ -98,7 +113,7 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 	UINT32 descVersion = 0;
 
 	UINT8* desc = 0;
-	
+
 	systble->BootServices->GetMemoryMap(&mapSize, 0, &mapKey, &descSize, &descVersion);		// Getting memory map size
 	mapSize += sizeof(EFI_MEMORY_DESCRIPTOR) * 64;											// Some extra space in case the map changes
 
@@ -106,18 +121,19 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 
 	systble->BootServices->GetMemoryMap(&mapSize, (EFI_MEMORY_DESCRIPTOR*)desc, &mapKey, &descSize, &descVersion);	//Getting the actual memory map
 
+	
 	UINTN numEntries = mapSize / descSize;
 
-	println(L"Memory Map");
-	
-	for (UINTN i = 0; i < 7; i++) {
+	for (UINTN i = 0; i < numEntries; i++) {
 		EFI_MEMORY_DESCRIPTOR d = *((EFI_MEMORY_DESCRIPTOR*)(desc + i * descSize));
-		printf(L"Entry: %U\n", i);
-		printf(L"   Type:           %s\n", GetMemoryTypeString(d.Type));
-		printf(L"   Physical Start: %H\n", d.PhysicalStart);
-		printf(L"   Virtual Start:  %H\n", d.VirtualStart);
-		printf(L"   Size:           %H Bytes (%U Pages)\n", d.NumberOfPages * 4096, d.NumberOfPages);
+		fprintf(file, L"Entry: %U\n", i);
+		fprintf(file, L"   Type:           %s\n", GetMemoryTypeString(d.Type));
+		fprintf(file, L"   Physical Start: %H\n", d.PhysicalStart);
+		fprintf(file, L"   Virtual Start:  %H\n", d.VirtualStart);
+		fprintf(file, L"   Size:           %U Bytes (%U Pages)\n", d.NumberOfPages * 4096, d.NumberOfPages);
 	}
+	
+	CloseFile(file);
 
 	WaitEscapeAndExit();
 
