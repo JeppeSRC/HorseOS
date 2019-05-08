@@ -105,7 +105,7 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 	EFI_FILE_PROTOCOL* rootDir = 0;
 	sfp->OpenVolume(sfp, &rootDir);
 
-	EFI_FILE_PROTOCOL* file = OpenFile(rootDir, L"memmap.txt", EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+	EFI_FILE_PROTOCOL* file = OpenFile(rootDir, L"kernel/kernel.idk", EFI_FILE_MODE_CREATE | EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
 
 	UINTN mapSize = 0;
 	UINTN mapKey = 0;
@@ -121,7 +121,6 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 
 	systble->BootServices->GetMemoryMap(&mapSize, (EFI_MEMORY_DESCRIPTOR*)desc, &mapKey, &descSize, &descVersion);	//Getting the actual memory map
 
-	
 	UINTN numEntries = mapSize / descSize;
 
 	for (UINTN i = 0; i < numEntries; i++) {
