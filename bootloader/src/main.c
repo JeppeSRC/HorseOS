@@ -50,7 +50,6 @@ VOID* Allocate(UINTN bytes, EFI_MEMORY_TYPE type, EFI_BOOT_SERVICES* boot) {
 
 EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 	InitializeLibrary(handle, systble);
-	printf(L"Booting.... %u\n", 0);
 
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* gop = 0;
 	EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
@@ -83,14 +82,6 @@ EFI_STATUS efi_main(EFI_HANDLE handle, EFI_SYSTEM_TABLE* systble) {
 	systble->ConOut->SetMode(systble->ConOut, topModeIndex);
 
 	println(L"Booting...");
-
-	/*CHAR16 test[10];
-
-	UINT32 num = uint32ToString(123, 10, test);
-
-	test[num] = 0;
-
-	println(test);*/
 
 	printf(L"Setting framebuffer to mode %u:\n"
 		   L"    Width x Height: %ux%u\n"
